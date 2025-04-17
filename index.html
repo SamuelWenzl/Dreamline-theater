@@ -12,24 +12,12 @@
       text-align: center;
       padding: 0;
       margin: 0;
-      overflow-x: hidden;
-    }
-
-    video#dreamloop {
-      position: fixed;
-      right: 0;
-      bottom: 0;
-      min-width: 100vw;
-      min-height: 100vh;
-      z-index: -1;
-      object-fit: cover;
-      opacity: 0.4;
-      filter: blur(4px) brightness(0.7);
     }
 
     .container {
       padding: 40px;
-      background-color: rgba(0,0,0,0.5);
+      max-width: 800px;
+      margin: auto;
     }
 
     h1 {
@@ -67,9 +55,6 @@
     #dream-log {
       margin-top: 40px;
       text-align: left;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
       background: rgba(255, 255, 255, 0.05);
       padding: 20px;
       border-radius: 12px;
@@ -83,40 +68,19 @@
       border-bottom: 1px dashed #ffffff33;
     }
 
-    .interpretation {
-      color: #bde0fe;
-    }
+    .interpretation { color: #bde0fe; }
+    .freud { color: #ffb4a2; }
+    .zhou { color: #a0e7e5; }
+    .jung { color: #cdb4db; }
+    .lacan { color: #ffd6a5; }
+    .dao { color: #b9fbc0; }
+    .challenge { color: #ffdd57; }
 
-    .freud {
-      color: #ffb4a2;
-    }
-
-    .zhou {
-      color: #a0e7e5;
-    }
-
-    .challenge {
-      color: #ffdd57;
-    }
-
-    #mic {
-      font-size: 1.8em;
-      margin-left: 15px;
-      cursor: pointer;
-    }
-
-    #listening {
-      margin-top: 5px;
-      color: #a0e7e5;
-    }
+    #mic { font-size: 1.8em; margin-left: 15px; cursor: pointer; }
+    #listening { margin-top: 5px; color: #a0e7e5; }
   </style>
 </head>
 <body>
-  <video autoplay muted loop id="dreamloop">
-    <source src="https://www.videvo.net/videvo_files/converted/2015_09/preview/CloudsTimelapse3Videvo.mov84713.webm" type="video/webm">
-    Your browser does not support the video tag.
-  </video>
-
   <div class="container">
     <h1>Dreamline Theater</h1>
     <input type="text" id="userInput" placeholder="Describe your dream fragment..." />
@@ -131,6 +95,9 @@
       <h4>Which interpretation spoke to you?</h4>
       <button onclick="vote('Freud')">Freud</button>
       <button onclick="vote('Zhou')">Zhou</button>
+      <button onclick="vote('Jung')">Jung</button>
+      <button onclick="vote('Lacan')">Lacan</button>
+      <button onclick="vote('Dao')">Dao</button>
       <button onclick="vote('Challenge')">Challenge</button>
       <p id="vote-response" style="margin-top:10px;"></p>
     </div>
@@ -142,25 +109,37 @@
   </div>
 
   <script>
-    function sendInput(inputText = null) {
+    const openaiApiKey = "YOUR_OPENAI_API_KEY_HERE";
+
+    async function sendInput(inputText = null) {
       const input = inputText || document.getElementById('userInput').value;
-      const continuation = generateDreamContinuation(input);
-      const freudian = interpretFreud(input);
-      const zhou = interpretZhou(input);
-      const counter = dreamChallenge(input);
-
-      const fullResponse = `
-        <div class="interpretation">
-          <p><strong>Your dream continues:</strong><br> ${continuation}</p>
-          <p class="freud"><strong>Freud's Analysis:</strong><br> ${freudian}</p>
-          <p class="zhou"><strong>Duke of Zhou's Reading:</strong><br> ${zhou}</p>
-          <p class="challenge"><strong>The Dreamline Questions You:</strong><br> ${counter}</p>
-        </div>`;
-
-      document.getElementById('response').innerHTML = fullResponse;
-      const utterance = new SpeechSynthesisUtterance(continuation);
-      speechSynthesis.speak(utterance);
-      addToDreamLog(input, continuation, freudian, zhou, counter);
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${openaiApiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are an AI dream-weaver that responds in recursive dream layers, continuing dreams in surreal poetic form. Then you interpret the dream using: Freud's psychoanalysis, the Duke of Zhou's classical readings, Jungian archetypes, Lacanian structures, and Daoist philosophy. End with a philosophical challenge or paradox."
+            },
+            {
+              role: "user",
+              content: `Here is a dream: ${input}. Continue it recursively, then analyze it through all five dream philosophies, and finally challenge its meaning.`
+            }
+          ]
+        })
+      });
+      const data = await response.json();
+      const dreamText = data.choices[0].message.content;
+      document.getElementById('response').innerHTML = `<div class="interpretation">${dreamText}</div>`;
+      const utter = new SpeechSynthesisUtterance(dreamText);
+      speechSynthesis.speak(utter);
+      addToDreamLog(input, dreamText);
     }
 
     function startListening() {
@@ -168,84 +147,34 @@
       recognition.lang = 'en-US';
       recognition.start();
       document.getElementById('listening').style.display = 'block';
-
       recognition.onresult = function (event) {
         const transcript = event.results[0][0].transcript;
         document.getElementById('userInput').value = transcript;
         document.getElementById('listening').style.display = 'none';
         sendInput(transcript);
       };
-
       recognition.onend = function () {
         document.getElementById('listening').style.display = 'none';
       };
     }
 
-    function generateDreamContinuation(input) {
-      const dreams = [
-        "You enter a hallway of soft light, each door humming a forgotten lullaby. The floor is made of letters you once wrote and never sent.",
-        "You float above a sea of mirrors, where your reflection acts independently, whispering secrets you almost remember.",
-        "You find yourself walking through a forest made of books. Trees whisper your thoughts aloud. One opens and invites you inside.",
-        "You fall upward into a sky painted by someone who knew your fears. Clouds take the shape of people you've loved and lost.",
-        "You hold a key made of breath. It unlocks a box containing your earliest memory — but it flickers like fire and refuses to be seen."
-      ];
-      return dreams[Math.floor(Math.random() * dreams.length)];
-    }
-
-    function interpretFreud(input) {
-      const themes = [
-        "This dream reflects wish-fulfillment masked by displacement. The emotional center is hidden but powerful.",
-        "You may be experiencing repression around unresolved childhood conflicts — the imagery is symbolic of forbidden desire.",
-        "Your subconscious is performing condensation — blending multiple experiences into one surreal image.",
-        "The dream may represent internalized guilt — likely displaced onto the symbolic environment rather than the self.",
-        "There is a tension between ego and id — perhaps the dream tries to resolve it in disguised metaphor."
-      ];
-      return themes[Math.floor(Math.random() * themes.length)];
-    }
-
-    function interpretZhou(input) {
-      const omens = [
-        "Such a dream speaks of hidden clarity. The soul has seen a truth not yet revealed by daylight.",
-        "The symbolism suggests harmony must be restored. There may be an imbalance between personal duty and cosmic rhythm.",
-        "It is a favorable omen — a great change may come, but only if you remain still and receptive.",
-        "This dream reveals a message from ancestors or unseen guides. Contemplate it beneath the moon.",
-        "Do not act quickly. The dream offers insight, but the meaning will unfold with patience."
-      ];
-      return omens[Math.floor(Math.random() * omens.length)];
-    }
-
-    function dreamChallenge(input) {
-      const challenges = [
-        "But what if this dream is not yours at all? What if it's someone else's memory leaking into your sleep?",
-        "Is the image you dreamed a symbol — or a veil? What truth might it be hiding?",
-        "Suppose this dream is warning you, not guiding you. What if its beauty is a trap?",
-        "Could the dream be false comfort — designed by your mind to hide what you cannot face?",
-        "Who benefits from you believing this dream? The dream itself, or you?"
-      ];
-      return challenges[Math.floor(Math.random() * challenges.length)];
-    }
-
-    function addToDreamLog(input, continuation, freud, zhou, counter) {
+    function addToDreamLog(input, output) {
       const log = document.getElementById('log-entries');
       const entry = document.createElement('div');
       entry.classList.add('dream-entry');
-      entry.innerHTML = `
-        <strong>You:</strong> ${input}<br>
-        <strong>Dream continues:</strong> ${continuation}<br>
-        <span class="freud"><strong>Freud:</strong> ${freud}</span><br>
-        <span class="zhou"><strong>Zhou:</strong> ${zhou}</span><br>
-        <span class="challenge"><strong>Challenge:</strong> ${counter}</span>
-      `;
+      entry.innerHTML = `<strong>You:</strong> ${input}<br><strong>Dreamline:</strong> ${output}`;
       log.prepend(entry);
     }
 
-    let votes = { Freud: 0, Zhou: 0, Challenge: 0 };
+    let votes = {
+      Freud: 0, Zhou: 0, Jung: 0, Lacan: 0, Dao: 0, Challenge: 0
+    };
 
     function vote(choice) {
       votes[choice]++;
-      document.getElementById('vote-response').innerHTML = 
-        `Thank you for your vote. Current resonance:<br>
-        Freud: ${votes.Freud}, Zhou: ${votes.Zhou}, Challenge: ${votes.Challenge}`;
+      document.getElementById('vote-response').innerHTML =
+        `Thanks for voting. Totals:<br>
+        Freud: ${votes.Freud}, Zhou: ${votes.Zhou}, Jung: ${votes.Jung}, Lacan: ${votes.Lacan}, Dao: ${votes.Dao}, Challenge: ${votes.Challenge}`;
     }
   </script>
 </body>

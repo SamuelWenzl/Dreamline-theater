@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dreamline Theater — Dual Dream Interpretation</title>
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      background: radial-gradient(ellipse at center, #1c1c2b, #0a0a13);
+      color: #f5f5f5;
+      text-align: center;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      color: #ffeecb;
+      margin-bottom: 30px;
+    }
+
+    input[type="text"] {
+      padding: 15px;
+      font-size: 1.1em;
+      width: 60%;
+      border: none;
+      border-radius: 8px;
+      background: #2c2c40;
+      color: #fff;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 1em;
+      border: none;
+      border-radius: 6px;
+      margin: 10px;
+      cursor: pointer;
+      background-color: #5c6ac4;
+      color: white;
+    }
+
+    #response {
+      margin-top: 30px;
+      font-size: 1.2em;
+    }
+
+    #dream-log {
+      margin-top: 40px;
+      text-align: left;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 12px;
+      overflow-y: auto;
+      max-height: 350px;
+    }
+
+    .dream-entry {
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px dashed #ffffff33;
+    }
+
+    .interpretation {
+      color: #bde0fe;
+    }
+
+    .freud {
+      color: #ffb4a2;
+    }
+
+    .zhou {
+      color: #a0e7e5;
+    }
+  </style>
+</head>
+<body>
+  <h1>Dreamline Theater</h1>
+  <input type="text" id="userInput" placeholder="Describe your dream fragment..." />
+  <br />
+  <button onclick="sendInput()">Submit</button>
+  <button onclick="startListening()">Speak</button>
+
+  <div id="response"></div>
+
+  <div id="dream-log">
+    <h3>Dream Log</h3>
+    <div id="log-entries"></div>
+  </div>
+
+  <script>
+    function sendInput(inputText = null) {
+      const input = inputText || document.getElementById('userInput').value;
+      const continuation = generateDreamContinuation(input);
+      const freudian = interpretFreud(input);
+      const zhou = interpretZhou(input);
+
+      const fullResponse = `
+        <div class="interpretation">
+          <p><strong>Your dream continues:</strong> ${continuation}</p>
+          <p class="freud"><strong>Freud's View:</strong> ${freudian}</p>
+          <p class="zhou"><strong>Duke of Zhou's View:</strong> ${zhou}</p>
+        </div>`;
+
+      document.getElementById('response').innerHTML = fullResponse;
+      const utterance = new SpeechSynthesisUtterance(continuation);
+      speechSynthesis.speak(utterance);
+      addToDreamLog(input, continuation, freudian, zhou);
+    }
+
+    function startListening() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'en-US';
+      recognition.start();
+      recognition.onresult = function (event) {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById('userInput').value = transcript;
+        sendInput(transcript);
+      };
+    }
+
+    function generateDreamContinuation(input) {
+      const dreams = [
+        "You walk barefoot into a mirror that ripples like water.",
+        "A bird made of your childhood memories lands on your shoulder.",
+        "You discover a door behind your eyelids and open it slowly.",
+        "The stars spell out a secret only your shadow understands.",
+        "You find a feather made of light, and it hums when touched.",
+        "Time folds inward and reveals your name written in clouds."
+      ];
+      return dreams[Math.floor(Math.random() * dreams.length)];
+    }
+
+    function interpretFreud(input) {
+      const themes = [
+        "This may reveal latent desires emerging from the subconscious.",
+        "Your dream likely masks repressed memories or internal conflict.",
+        "There’s evidence of displacement — the dream represents a hidden wish.",
+        "The imagery might express a suppressed emotional tension or fixation.",
+        "Consider unresolved childhood impulses symbolized by dream elements."
+      ];
+      return themes[Math.floor(Math.random() * themes.length)];
+    }
+
+    function interpretZhou(input) {
+      const omens = [
+        "A sign of good fortune is approaching — be mindful of strangers.",
+        "This is a warning: your household must remain in balance.",
+        "It suggests clarity will come after a period of waiting or illness.",
+        "A noble visitor may bring wisdom soon — listen to advice given in dreams.",
+        "Your ancestors speak through symbols — offer reverence and interpret with care."
+      ];
+      return omens[Math.floor(Math.random() * omens.length)];
+    }
+
+    function addToDreamLog(input, continuation, freud, zhou) {
+      const log = document.getElementById('log-entries');
+      const entry = document.createElement('div');
+      entry.classList.add('dream-entry');
+      entry.innerHTML = `
+        <strong>You:</strong> ${input}<br>
+        <strong>Dream continues:</strong> ${continuation}<br>
+        <span class="freud"><strong>Freud:</strong> ${freud}</span><br>
+        <span class="zhou"><strong>Zhou:</strong> ${zhou}</span>
+      `;
+      log.prepend(entry);
+    }
+  </script>
+</body>
+</html>

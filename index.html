@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dreamline Theater — Dual Dream Interpretation</title>
+  <title>Dreamline Theater — AI Dream Interpretation</title>
   <style>
     body {
       font-family: 'Georgia', serif;
@@ -43,6 +43,7 @@
     #response {
       margin-top: 30px;
       font-size: 1.2em;
+      white-space: pre-line;
     }
 
     #dream-log {
@@ -92,23 +93,32 @@
   </div>
 
   <script>
-    function sendInput(inputText = null) {
-      const input = inputText || document.getElementById('userInput').value;
-      const continuation = generateDreamContinuation(input);
-      const freudian = interpretFreud(input);
-      const zhou = interpretZhou(input);
+    async function sendInput() {
+      const input = document.getElementById('userInput').value;
 
-      const fullResponse = `
-        <div class="interpretation">
-          <p><strong>Your dream continues:</strong> ${continuation}</p>
-          <p class="freud"><strong>Freud's View:</strong> ${freudian}</p>
-          <p class="zhou"><strong>Duke of Zhou's View:</strong> ${zhou}</p>
-        </div>`;
+      // Update this to your actual Replit backend URL
+      const backendURL = 'https://62f35ea2-c834-4929-8d84-78fbaa9e8081-00-19nbv7akdlhd4.worf.replit.dev/dream';
 
-      document.getElementById('response').innerHTML = fullResponse;
-      const utterance = new SpeechSynthesisUtterance(continuation);
-      speechSynthesis.speak(utterance);
-      addToDreamLog(input, continuation, freudian, zhou);
+      try {
+        const res = await fetch(backendURL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userInput: input })
+        });
+
+        const data = await res.json();
+
+        const responseText = data.result || "No response from AI.";
+
+        document.getElementById('response').innerHTML = responseText;
+
+        const utterance = new SpeechSynthesisUtterance(responseText);
+        speechSynthesis.speak(utterance);
+
+        addToDreamLog(input, responseText);
+      } catch (err) {
+        document.getElementById('response').textContent = 'Error: ' + err.message;
+      }
     }
 
     function startListening() {
@@ -122,52 +132,17 @@
       };
     }
 
-    function generateDreamContinuation(input) {
-      const dreams = [
-        "As you open the hidden door behind your eyelids, you step into a vast forest suspended in the sky. Trees float gently, their leaves made of stardust, whispering memories you thought were long forgotten. A fox made of clock parts approaches and speaks your childhood nickname in a mechanical voice.",
-        "You find yourself in an endless hallway where each door leads to a version of your life you didn’t live. One opens to show you as a traveler on a distant planet, surrounded by glass mountains that echo your regrets in melodic tones.",
-        "A mirror swallows your reflection and you find yourself walking through your own memories. Every step alters the past slightly — a book changes color, a person you once knew now wears a different face. Your emotional response guides which memories solidify.",
-        "You float gently above a city made of dreams, where buildings shift shape based on human hopes. An old woman hands you a crystal orb containing your sleeping self, and she tells you that understanding the dream will set one of you free.",
-        "You ride a train with no destination, surrounded by faceless passengers. As the train tunnels through clouds, you realize it's powered by forgotten thoughts and unspoken words. Outside the window, your childhood home appears and dissolves with every breath."
-      ];
-      return dreams[Math.floor(Math.random() * dreams.length)];
-    }
-
-    function interpretFreud(input) {
-      const themes = [
-        "The presence of symbolic imagery suggests a manifestation of repressed desires. Freud might argue this dream reveals your inner conflict between the id and the ego, where suppressed emotions surface in metaphorical form. For example, a door may symbolize access to forbidden knowledge or repressed memory.",
-        "This dream may represent a form of wish fulfillment, where unconscious desires — perhaps related to past trauma or unacknowledged impulses — take on fantastical shapes. The surreal nature of your experience points to displacement and condensation, two key mechanisms of dream-work.",
-        "Freud would view this dream as a disguised expression of latent content. The dream may be shielding you from an uncomfortable truth, using bizarre symbols as protective camouflage. The interpretation would depend on your personal experiences and the emotional charge of each symbol.",
-        "In Freudian theory, such dreams act as a release valve for psychological tension. The fantastical elements likely mask suppressed emotions, with the dream serving as a compromise formation between your unconscious drives and societal expectations you've internalized.",
-        "Dreams such as these often reflect unresolved Oedipal or childhood conflicts, re-imagined in new metaphorical settings. Freud believed dreams allowed these conflicts to resurface in a symbolic form, thus enabling a psychological rehearsal of unprocessed feelings."
-      ];
-      return themes[Math.floor(Math.random() * themes.length)];
-    }
-
-    function interpretZhou(input) {
-      const omens = [
-        "In ancient Chinese interpretation, dreams involving surreal journeys often signify internal spiritual evolution. This dream indicates that you are undergoing a transformation — a shedding of worldly attachments and a movement toward clarity and harmony with the Dao.",
-        "According to the Duke of Zhou, the symbols in your dream could reflect heavenly messages. Encountering fantastical elements like floating structures or magical beings suggests divine guidance. You may soon face a choice that alters your path — the dream is a signal to listen closely to your intuition.",
-        "Dreams involving transformations or travels to other realms often carry omens of change and personal growth. The imagery could mean an ancestor is reaching out through symbolic forms, urging you to reconcile something left undone in your life or lineage.",
-        "This dream hints at imbalances within your spiritual or familial relationships. The Duke would recommend rituals of renewal or offerings of reverence, as the imagery suggests the spirit world is in subtle dialogue with your waking mind.",
-        "The dream reveals a crossroad of destiny. Such imagery might have once been interpreted as an invitation to consult the I Ching or seek wisdom from elders. Pay attention to recurring symbols — they may appear again in waking life as signs to guide your next steps."
-      ];
-      return omens[Math.floor(Math.random() * omens.length)];
-    }
-
-    function addToDreamLog(input, continuation, freud, zhou) {
+    function addToDreamLog(input, result) {
       const log = document.getElementById('log-entries');
       const entry = document.createElement('div');
       entry.classList.add('dream-entry');
       entry.innerHTML = `
         <strong>You:</strong> ${input}<br>
-        <strong>Dream continues:</strong> ${continuation}<br>
-        <span class="freud"><strong>Freud:</strong> ${freud}</span><br>
-        <span class="zhou"><strong>Zhou:</strong> ${zhou}</span>
+        <strong>AI Interpretation:</strong><br>
+        <pre>${result}</pre>
       `;
       log.prepend(entry);
     }
   </script>
 </body>
 </html>
-
